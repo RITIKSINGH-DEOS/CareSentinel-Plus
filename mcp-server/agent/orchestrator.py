@@ -1,4 +1,5 @@
 import json
+import re
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -13,6 +14,40 @@ from tools.visitor_tools import analyze_visitor_intent
 from tools.security_tools import control_smart_lock, get_current_lock_state
 from tools.health_tools import emergency_health_triage, medication_schedule_logger
 from tools.dispatch_tools import caregiver_dispatcher
+
+def extract_time(text: str) -> str:
+    match = re.search(r'(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)', text, re.IGNORECASE)
+    if match:
+        hour = int(match.group(1))
+        minute = match.group(2) or "00"
+        ampm = match.group(3).upper().replace(".", "")
+        return f"{hour:02d}:{minute} {ampm}"
+    match2 = re.search(r'(\d{1,2})\s*(?:o\'?clock)?\s*(in the morning|in the evening|at night|in the afternoon)', text, re.IGNORECASE)
+    if match2:
+        hour = int(match2.group(1))
+        period = match2.group(2).lower()
+        ampm = "PM" if any(p in period for p in ["evening", "night", "afternoon"]) and hour < 12 else "AM"
+        return f"{hour:02d}:00 {ampm}"
+    return "08:00 AM"
+
+def extract_medication_name(text: str) -> str:
+    lower = text.lower()
+    if "vitamin" in lower:
+        return "Daily Multivitamin" if "multi" in lower else "Vitamins"
+    if "amlodipine" in lower or "blood pressure" in lower or " bp " in f" {lower} ":
+        return "Amlodipine (5mg)"
+    if "metformin" in lower or "sugar" in lower or "diabetes" in lower:
+        return "Metformin (500mg)"
+    if "atorvastatin" in lower or "cholesterol" in lower:
+        return "Atorvastatin (10mg)"
+    if "calcium" in lower:
+        return "Calcium Supplement"
+    if "omega" in lower or "fish oil" in lower:
+        return "Omega-3"
+    match = re.search(r'(?:take|taking|have)\s+([a-zA-Z0-9\s\-]+?)(?:\s+everyday|\s+daily|\s+at|\s+in|$)', lower)
+    if match and len(match.group(1).strip()) > 2:
+        return match.group(1).strip().title()
+    return "Prescription Medication"
 
 class AlexaAgentOrchestrator:
     """
@@ -136,29 +171,65 @@ class AlexaAgentOrchestrator:
             }
 
         # -------------------------------------------------------------
-        # 3. Medication Tracking Intent
+        # 3. Medication & Vitamin Tracking / Reminders Intent
         # -------------------------------------------------------------
-        elif any(w in user_lower for w in ["medicine", "tablet", "pill", "dose", "amlodipine", "metformin"]):
-            if any(w in user_lower for w in ["took", "taken", "had my"]):
+        is_reminder_intent = any(w in user_lower for w in ["remind", "reminder", "alarm", "schedule", "alert me"])
+        is_med_related = any(w in user_lower for w in [
+            "vitamin", "vitamins", "medicine", "pill", "tablet", "dose",
+            "amlodipine", "metformin", "atorvastatin", "supplement", "capsule", "drops", "syrup", "dawai"
+        ])
+
+        if is_reminder_intent or is_med_related:
+            med_name = extract_medication_name(user_text)
+
+            if is_reminder_intent or any(w in user_lower for w in ["everyday", "daily", "at ", "in the morning", "in the evening"]):
+                time_val = extract_time(user_text)
+                action = "SET_REMINDER"
+                med_res = medication_schedule_logger(MedicationLogInput(
+                    medication_name=med_name,
+                    action=action,
+                    reminder_time=time_val
+                ))
+                alexa_speech = f"I have set a daily reminder for your {med_name} every morning at {time_val}." if "am" in time_val.lower() else f"I have set a daily reminder for your {med_name} at {time_val}."
+            elif any(w in user_lower for w in ["took", "taken", "had my", "le li", "kha li"]):
                 action = "LOG_TAKEN"
-            elif any(w in user_lower for w in ["when", "next", "did i take", "schedule"]):
+                med_res = medication_schedule_logger(MedicationLogInput(medication_name=med_name, action=action))
+                alexa_speech = med_res.message
+            elif any(w in user_lower for w in ["when", "next", "did i take", "schedule", "kab"]):
                 action = "QUERY_NEXT"
+                med_res = medication_schedule_logger(MedicationLogInput(medication_name=med_name, action=action))
+                alexa_speech = med_res.message
             else:
                 action = "LOG_TAKEN"
+                med_res = medication_schedule_logger(MedicationLogInput(medication_name=med_name, action=action))
+                alexa_speech = med_res.message
 
-            med_name = "Amlodipine (5mg)" if "bp" in user_lower or "amlodipine" in user_lower else "Metformin (500mg)"
-            med_res = medication_schedule_logger(MedicationLogInput(medication_name=med_name, action=action))
             executed_tools.append({
                 "tool": "medication_schedule_logger",
-                "params": {"medication_name": med_name, "action": action},
+                "params": {"medication_name": med_name, "action": action, "reminder_time": extract_time(user_text)},
                 "result": med_res.model_dump()
             })
-            alexa_speech = med_res.message
             ui_card_type = "MEDICATION_LOG"
             ui_card_data = med_res.model_dump()
 
         # -------------------------------------------------------------
-        # 4. General Conversational / Status Overview
+        # 4. Health Vitals Query Intent
+        # -------------------------------------------------------------
+        elif any(w in user_lower for w in ["vitals", "blood pressure", "bp", "heart rate", "pulse", "oxygen", "spo2", "sugar", "health status", "how am i doing"]):
+            alexa_speech = "Your health vitals are normal: Blood Pressure is 128 over 82 mmHg, resting heart rate is 72 BPM, and SpO2 oxygen is 98 percent. All indicators are stable."
+            ui_card_type = "VITALS_REPORT"
+            ui_card_data = {"bp": "128/82", "heart_rate": 72, "spo2": 98, "status": "NORMAL"}
+
+        # -------------------------------------------------------------
+        # 5. Friendly / Conversational Intent
+        # -------------------------------------------------------------
+        elif any(w in user_lower for w in ["hello", "hi alexa", "good morning", "good evening", "how are you", "thank you", "thanks"]):
+            alexa_speech = "Good day! CareSentinel+ is watching over your home. The front door is securely locked and all systems are normal. How can I help you?"
+            ui_card_type = "CONVERSATION"
+            ui_card_data = {"greeting": True}
+
+        # -------------------------------------------------------------
+        # 6. General Conversational / Status Overview
         # -------------------------------------------------------------
         else:
             door_status = get_current_lock_state("front_door")

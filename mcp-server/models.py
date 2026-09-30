@@ -86,12 +86,13 @@ class CaregiverDispatchOutput(BaseModel):
 class MedicationLogInput(BaseModel):
     patient_id: str = "elder_primary"
     medication_name: str
-    action: Literal["LOG_TAKEN", "SKIP_DOSE", "QUERY_NEXT"]
+    action: Literal["LOG_TAKEN", "SKIP_DOSE", "QUERY_NEXT", "SET_REMINDER"]
+    reminder_time: Optional[str] = "08:00 AM"
     timestamp: Optional[str] = None
 
 class MedicationLogOutput(BaseModel):
     medication_name: str
-    status: Literal["CONFIRMED_TAKEN", "ALREADY_TAKEN_WARNING", "SKIPPED_LOGGED", "SCHEDULE_INFO"]
+    status: Literal["CONFIRMED_TAKEN", "ALREADY_TAKEN_WARNING", "SKIPPED_LOGGED", "SCHEDULE_INFO", "REMINDER_SET"]
     next_due_time: str
     interaction_warning: Optional[str] = None
     message: str

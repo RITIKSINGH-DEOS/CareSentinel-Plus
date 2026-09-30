@@ -84,6 +84,22 @@ def medication_schedule_logger(params: MedicationLogInput) -> MedicationLogOutpu
 
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
 
+    if params.action == "SET_REMINDER":
+        due_time = params.reminder_time or "08:00 AM"
+        med_key = target_med or params.medication_name.strip().title()
+        meds[med_key] = {
+            "due_time": due_time,
+            "taken_today": False,
+            "last_taken": None
+        }
+        return MedicationLogOutput(
+            medication_name=med_key,
+            status="REMINDER_SET",
+            next_due_time=due_time,
+            interaction_warning=None,
+            message=f"I have set a daily reminder for your {med_key} at {due_time}. I will alert you and log your adherence."
+        )
+
     if not target_med:
         return MedicationLogOutput(
             medication_name=params.medication_name,

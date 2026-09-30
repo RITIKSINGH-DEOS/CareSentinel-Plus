@@ -83,6 +83,14 @@ export default function Home() {
       reply = "Please sit down immediately. I have registered acute distress and dispatched an emergency alert to your daughter Priya.";
       addEvent("emergency_health_triage", { symptoms: ["dizziness / acute distress"] }, { urgency_level: "ELEVATED", first_aid: "Sit down safely" });
       addEvent("caregiver_dispatcher", { alert_level: "ELEVATED" }, { recipients_notified: ["Priya (Daughter)"], status: "AWS_SNS_DELIVERED" });
+    } else if (lower.includes("remind") || lower.includes("vitamin") || lower.includes("alarm") || (lower.includes("schedule") && !lower.includes("what"))) {
+      const timeMatch = userMessage.match(/(\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.))/i);
+      const timeStr = timeMatch ? timeMatch[0].toUpperCase() : "06:00 AM";
+      const medName = lower.includes("vitamin") ? "Vitamins" : (lower.includes("bp") ? "Amlodipine (5mg)" : "Prescription Medication");
+      reply = `I have set a daily reminder for your ${medName} every morning at ${timeStr}. I will alert you and track your adherence!`;
+      addEvent("medication_schedule_logger", { medication_name: medName, action: "SET_REMINDER", reminder_time: timeStr }, { status: "REMINDER_SET", next_due: timeStr }, "Alexa+ Agent");
+    } else if (lower.includes("vitals") || lower.includes("bp") || lower.includes("blood pressure") || lower.includes("heart rate") || lower.includes("pulse")) {
+      reply = "Your health vitals are normal: Blood Pressure is 128 over 82 mmHg, resting heart rate is 72 BPM, and SpO2 oxygen is 98 percent. All indicators are stable.";
     } else if (lower.includes("medicine") || lower.includes("pill") || lower.includes("dose")) {
       reply = "Logged: You have taken your morning Blood Pressure medication (Amlodipine 5mg). Good job staying healthy!";
       addEvent("medication_schedule_logger", { medication_name: "Amlodipine", action: "LOG_TAKEN" }, { status: "CONFIRMED_TAKEN", next_due: "Tomorrow 08:00 AM" });
