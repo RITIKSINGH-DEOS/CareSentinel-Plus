@@ -102,6 +102,21 @@ flowchart TD
 
 ---
 
+## 🖥️ Why We Built the Echo Show 15 Frontend UI (The Rationale)
+
+In a live production deployment, CareSentinel+ runs directly on a wall-mounted **Amazon Echo Show 15** smart display connected to physical Ring doorbells and smart deadbolts. For this hackathon and open-source release, we engineered a dedicated Next.js web console for four key reasons:
+
+1. **Zero-Hardware Accessibility for Judges & Reviewers:**
+   Requiring physical hardware would demand **$500+** in equipment ($280 Echo Show 15 + $100 Ring Doorbell + $150 Smart Lock). Our browser-based console allows hackathon evaluators and developers worldwide to experience the complete voice, vision, and actuator loop on any computer with zero hardware prerequisites.
+2. **Multi-Modal Geriatric Accessibility (Voice + Visual Cards):**
+   Elderly individuals frequently experience mild hearing impairment or cognitive fatigue. Pure voice assistants can be overwhelming when reciting lengthy spoken updates. The Echo Show 15 UI provides high-contrast, glanceable visual cards (real-time door status, vitals telemetry, and interactive medication checkmarks) alongside natural spoken confirmations.
+3. **Effortless Interactive Scenario Evaluation:**
+   Reviewers can trigger simulated real-world edge cases (e.g., an 11:32 PM late-night delivery or an acute ground fall) with a single click, observing how Ring vision, smart locks, and Alexa+ coordinate synchronously.
+4. **Under-the-Hood Transparency (Real-Time MCP Inspector):**
+   The console features a collapsible **MCP Telemetry Inspector** that reveals live JSON-RPC 2.0 tool calls, parameter payloads, and responses as they stream through the Streamable HTTP gateway in real time.
+
+---
+
 ## 🛠️ The 5 Model Context Protocol (MCP) Tools
 
 All tools are implemented in [`mcp-server/tools/`](mcp-server/tools/) following strict Pydantic schemas:
