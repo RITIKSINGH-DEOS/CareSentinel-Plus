@@ -33,17 +33,6 @@ Over **58 million elderly individuals** live alone globally. Traditional smart h
 | **3. Senior Scamming & Nighttime Intruder Exposure** | Criminals and aggressive solicitors frequently target solo seniors after dark. Seniors often open the front door out of confusion or courtesy, exposing themselves to home invasions. | **Proactive Perimeter Defense & Two-Way Proxy:** When Ring detects movement at night (e.g., 11:32 PM), CareSentinel+ analyzes visitor intent, keeps the deadbolt locked, and speaks directly to the driver via the outdoor Ring speaker (*"Please leave package on doorstep"*), keeping the senior safe inside. |
 | **4. Caregiver Distance Anxiety & Family Guilt** | Adult children living in different cities or working long hours endure chronic anxiety, constantly worrying whether their aging parents took their pills, answered the door, or are lying injured. | **24/7 Telemetry & Instant Peace of Mind:** Caregivers receive instant, structured updates via AWS SNS (SMS and push notifications) only when genuine attention is needed, eliminating nagging calls while maintaining safety. |
 
----
-
-## 🏆 Quick Scorecard: How CareSentinel+ Hits Hackathon Criteria
-
-| Judging Dimension | Weight | How CareSentinel+ Delivers |
-| :--- | :---: | :--- |
-| **Technical Execution** | **25%** | Full implementation of the **Streamable HTTP MCP Specification (2025-11-25+)** with JSON-RPC 2.0 (`/mcp/sse`, `/mcp/messages`), 5 strictly-typed Pydantic tools, Next.js 14 luxury UI, and **6/6 automated tests passing 100%**. |
-| **Real-World Impact** | **25%** | Addresses elderly solo living, reducing emergency response delays from hours to seconds and eliminating dangerous medication confusion. |
-| **Innovation & Agentic UX** | **25%** | True **cross-device autonomy**: Ring vision triggers smart locks; health symptoms trigger caregiver dispatch; ambient voice commands sync dynamically with live checklists. |
-| **Design & Presentation** | **25%** | High-end dark aesthetic modeled after the **Amazon Echo Show 15**, live audio waveform visualizer, hands-free ambient wake word (`"Alexa"`), and collapsible MCP telemetry inspector. |
-| **Ecosystem Feedback** | **Developer Impact** | Comprehensive, constructive developer experience feedback report in [`FRICTION_LOG.md`](FRICTION_LOG.md) analyzing Amazon's MCP protocol and developer tooling. |
 
 ---
 
