@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #090D16;
+  --foreground: #F8FAFC;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom glowing effects for Echo Show 15 smart UI */
+.glow-cyan {
+  box-shadow: 0 0 25px -3px rgba(0, 202, 255, 0.35);
+}
+
+.glow-alert {
+  box-shadow: 0 0 25px -3px rgba(239, 68, 68, 0.45);
+}
+
+.glow-safe {
+  box-shadow: 0 0 25px -3px rgba(16, 185, 129, 0.35);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
