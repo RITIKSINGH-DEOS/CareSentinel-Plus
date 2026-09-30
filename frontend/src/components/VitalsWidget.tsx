@@ -1,28 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Heart, Pill, Check, Clock } from "lucide-react";
 
-interface VitalsWidgetProps {
-  onMedicationClick: (medName: string) => void;
+export interface MedicationItem {
+  name: string;
+  purpose: string;
+  due: string;
+  taken: boolean;
 }
 
-export const VitalsWidget: React.FC<VitalsWidgetProps> = ({ onMedicationClick }) => {
-  const [meds, setMeds] = useState([
-    { name: "Amlodipine (5mg)", purpose: "Blood Pressure", due: "08:00 AM", taken: true },
-    { name: "Metformin (500mg)", purpose: "Diabetes", due: "01:00 PM", taken: false },
-    { name: "Atorvastatin (10mg)", purpose: "Cholesterol", due: "09:00 PM", taken: false },
-  ]);
+interface VitalsWidgetProps {
+  medications?: MedicationItem[];
+  onToggleMedication?: (index: number) => void;
+}
 
-  const toggleMed = (index: number) => {
-    const updated = [...meds];
-    updated[index].taken = !updated[index].taken;
-    setMeds(updated);
-    if (updated[index].taken) {
-      onMedicationClick(updated[index].name);
-    }
-  };
-
+export const VitalsWidget: React.FC<VitalsWidgetProps> = ({
+  medications = [],
+  onToggleMedication = () => {},
+}) => {
   return (
     <div className="bg-[#0D1322] border border-white/[0.08] rounded-3xl p-6 shadow-2xl flex flex-col gap-5">
       {/* Header */}
@@ -64,17 +60,17 @@ export const VitalsWidget: React.FC<VitalsWidgetProps> = ({ onMedicationClick })
             <Pill className="w-3.5 h-3.5 text-cyan-400" />
             Today&apos;s Medications
           </span>
-          <span className="text-[10px] text-slate-400">Click to confirm</span>
+          <span className="text-[10px] text-slate-400">Click or tell Alexa to confirm</span>
         </div>
 
         <div className="space-y-2">
-          {meds.map((med, idx) => (
+          {medications.map((med, idx) => (
             <div
               key={idx}
-              onClick={() => toggleMed(idx)}
+              onClick={() => onToggleMedication(idx)}
               className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                 med.taken
-                  ? "bg-emerald-500/5 border-emerald-500/20 text-slate-400"
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-slate-300"
                   : "bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04]"
               }`}
             >

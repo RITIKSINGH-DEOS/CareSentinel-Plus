@@ -5,7 +5,7 @@ import { HeaderBar } from "@/components/HeaderBar";
 import { RingCameraView } from "@/components/RingCameraView";
 import { AlexaVoiceSphere } from "@/components/AlexaVoiceSphere";
 import { MCPInspector, MCPEvent } from "@/components/MCPInspector";
-import { VitalsWidget } from "@/components/VitalsWidget";
+import { VitalsWidget, MedicationItem } from "@/components/VitalsWidget";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
@@ -18,6 +18,53 @@ export default function Home() {
   const [activeScenario, setActiveScenario] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [mcpEvents, setMcpEvents] = useState<MCPEvent[]>([]);
+  const [medications, setMedications] = useState<MedicationItem[]>([
+    { name: "Amlodipine (5mg)", purpose: "Blood Pressure", due: "08:00 AM", taken: true },
+    { name: "Metformin (500mg)", purpose: "Type-2 Diabetes", due: "01:00 PM", taken: false },
+    { name: "Atorvastatin (10mg)", purpose: "Cholesterol Control", due: "09:00 PM", taken: false },
+  ]);
+
+  const updateMedicationStatus = (medNameSearch: string, isTaken: boolean) => {
+    setMedications((prev) =>
+      prev.map((m) => {
+        const searchLower = medNameSearch.toLowerCase();
+        const mLower = m.name.toLowerCase();
+        const primaryWord = mLower.split(/[\s(]/)[0];
+        if (
+          mLower.includes(searchLower) ||
+          searchLower.includes(mLower) ||
+          (primaryWord.length > 2 && searchLower.includes(primaryWord))
+        ) {
+          return { ...m, taken: isTaken };
+        }
+        return m;
+      })
+    );
+  };
+
+  const addMedicationReminder = (name: string, dueTime: string) => {
+    setMedications((prev) => {
+      const exists = prev.some((m) => m.name.toLowerCase().includes(name.toLowerCase()));
+      if (exists) {
+        return prev.map((m) => m.name.toLowerCase().includes(name.toLowerCase()) ? { ...m, due: dueTime } : m);
+      }
+      return [...prev, { name: name.trim(), purpose: "Daily Regimen", due: dueTime, taken: false }];
+    });
+  };
+
+  const handleToggleMedicationItem = (index: number) => {
+    setMedications((prev) => {
+      const updated = [...prev];
+      const target = updated[index];
+      const nextTaken = !target.taken;
+      updated[index] = { ...target, taken: nextTaken };
+
+      const action = nextTaken ? "LOG_TAKEN" : "SKIP_DOSE";
+      addEvent("medication_schedule_logger", { medication_name: target.name, action }, { status: nextTaken ? "CONFIRMED_TAKEN" : "SKIPPED_LOGGED" });
+      setAlexaSpeech(nextTaken ? `Confirmed: You have taken your ${target.name}. Good job!` : `Noted: Marked ${target.name} as pending.`);
+      return updated;
+    });
+  };
 
   const addEvent = (tool: string, params: any, result: any, source: string = "Alexa+ Agent") => {
     const newEvt: MCPEvent = {
@@ -60,6 +107,14 @@ export default function Home() {
         }
         for (const t of data.tools_called || []) {
           addEvent(t.tool, t.params, t.result, "Alexa+ Voice Core");
+          if (t.tool === "medication_schedule_logger") {
+            const medName = t.result?.medication_name || t.params?.medication_name || "";
+            if (t.result?.status === "CONFIRMED_TAKEN" || t.result?.status === "ALREADY_TAKEN_WARNING") {
+              updateMedicationStatus(medName, true);
+            } else if (t.result?.status === "REMINDER_SET") {
+              addMedicationReminder(medName, t.result?.next_due_time || "08:00 AM");
+            }
+          }
         }
         setIsProcessing(false);
         return data.speech;
@@ -91,9 +146,17 @@ export default function Home() {
       addEvent("medication_schedule_logger", { medication_name: medName, action: "SET_REMINDER", reminder_time: timeStr }, { status: "REMINDER_SET", next_due: timeStr }, "Alexa+ Agent");
     } else if (lower.includes("vitals") || lower.includes("bp") || lower.includes("blood pressure") || lower.includes("heart rate") || lower.includes("pulse")) {
       reply = "Your health vitals are normal: Blood Pressure is 128 over 82 mmHg, resting heart rate is 72 BPM, and SpO2 oxygen is 98 percent. All indicators are stable.";
-    } else if (lower.includes("medicine") || lower.includes("pill") || lower.includes("dose")) {
-      reply = "Logged: You have taken your morning Blood Pressure medication (Amlodipine 5mg). Good job staying healthy!";
-      addEvent("medication_schedule_logger", { medication_name: "Amlodipine", action: "LOG_TAKEN" }, { status: "CONFIRMED_TAKEN", next_due: "Tomorrow 08:00 AM" });
+    } else if (lower.includes("metformin") || lower.includes("amlodipine") || lower.includes("atorvastatin") || lower.includes("medicine") || lower.includes("pill") || lower.includes("dose") || lower.includes("taken") || lower.includes("took")) {
+      const medName = lower.includes("metformin")
+        ? "Metformin (500mg)"
+        : lower.includes("atorvastatin")
+        ? "Atorvastatin (10mg)"
+        : lower.includes("amlodipine")
+        ? "Amlodipine (5mg)"
+        : "Metformin (500mg)";
+      updateMedicationStatus(medName, true);
+      reply = `Logged: You have safely taken ${medName}. Good job staying on track!`;
+      addEvent("medication_schedule_logger", { medication_name: medName, action: "LOG_TAKEN" }, { status: "CONFIRMED_TAKEN", next_due: "Tomorrow" }, "Alexa+ Agent");
     } else {
       reply = `CareSentinel+ is actively guarding your home. The front door is ${doorStatus.toLowerCase()}, and vitals are normal.`;
     }
@@ -184,9 +247,8 @@ export default function Home() {
             isProcessing={isProcessing}
           />
           <VitalsWidget
-            onMedicationClick={(medName) =>
-              handleSendMessage(`Alexa, I just took my ${medName}`)
-            }
+            medications={medications}
+            onToggleMedication={handleToggleMedicationItem}
           />
         </section>
 
