@@ -1,6 +1,6 @@
 # 📝 CareSentinel+ — Developer Friction Log & Product Feedback
 
-> **Devpost Submission Bonus:** Earns up to **+10% judging bonus score** by providing actionable feedback to Amazon Developer Relations and product teams building Alexa+, Ring, and AWS tools.
+> **Amazon Developer Ecosystem Feedback:** Technical friction log and developer experience recommendations for the Amazon Alexa+, Ring, and Model Context Protocol (MCP) product engineering teams.
 
 ---
 

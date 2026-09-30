@@ -43,7 +43,7 @@ Over **58 million elderly individuals** live alone globally. Traditional smart h
 | **Real-World Impact** | **25%** | Addresses elderly solo living, reducing emergency response delays from hours to seconds and eliminating dangerous medication confusion. |
 | **Innovation & Agentic UX** | **25%** | True **cross-device autonomy**: Ring vision triggers smart locks; health symptoms trigger caregiver dispatch; ambient voice commands sync dynamically with live checklists. |
 | **Design & Presentation** | **25%** | High-end dark aesthetic modeled after the **Amazon Echo Show 15**, live audio waveform visualizer, hands-free ambient wake word (`"Alexa"`), and collapsible MCP telemetry inspector. |
-| **Bonus: Friction Log** | **+10%** | Comprehensive, constructive developer experience feedback report in [`FRICTION_LOG.md`](FRICTION_LOG.md) analyzing Amazon's MCP protocol and developer tooling. |
+| **Ecosystem Feedback** | **Developer Impact** | Comprehensive, constructive developer experience feedback report in [`FRICTION_LOG.md`](FRICTION_LOG.md) analyzing Amazon's MCP protocol and developer tooling. |
 
 ---
 
@@ -259,9 +259,7 @@ CareSentinel+/
 ├── LICENSE                          # MIT Open Source License
 ├── README.md                        # Master Project Documentation & Quickstart
 ├── SYSTEM_DESIGN.md                 # In-depth architectural specification & flows
-├── PROJECT_BLUEPRINT.md             # Hackathon track alignment & scoring roadmap
-├── DEMO_VIDEO_SCRIPT.md             # Exact 3-minute video recording script
-├── FRICTION_LOG.md                  # Developer experience feedback (+10% Bonus)
+├── FRICTION_LOG.md                  # Developer ecosystem & API feedback
 ├── start.bat                        # One-click Windows starter script
 │
 ├── mcp-server/                      # Self-Hosted Python MCP Server
@@ -300,9 +298,9 @@ CareSentinel+/
 
 - **Devpost Project Submission:** [Amazon Developer Hackathon: Build, Ship, Shape 2026](https://amazonappdev2026.devpost.com/)
 - **GitHub Repository:** [github.com/RITIKSINGH-DEOS/CareSentinel-Plus](https://github.com/RITIKSINGH-DEOS/CareSentinel-Plus.git)
-- **Demo Video Script:** [`DEMO_VIDEO_SCRIPT.md`](DEMO_VIDEO_SCRIPT.md) (Under 3 minutes, ready to record)
-- **Developer Friction Log:** [`FRICTION_LOG.md`](FRICTION_LOG.md) (+10% Judging Bonus)
-- **License:** [`LICENSE`](LICENSE) (Official MIT Open Source License)
+- **System Architecture & Technical Specification:** [`SYSTEM_DESIGN.md`](SYSTEM_DESIGN.md)
+- **Developer Ecosystem Feedback:** [`FRICTION_LOG.md`](FRICTION_LOG.md)
+- **Open Source License:** [`LICENSE`](LICENSE) (Official MIT Open Source License)
 
 ---
 
