@@ -1,22 +1,21 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ShieldCheck, ShieldAlert, Wifi, Cloud, User, Heart, Bell } from "lucide-react";
+import { Shield, Lock, Unlock } from "lucide-react";
 
 interface HeaderBarProps {
   doorStatus: string;
-  isArmed: boolean;
-  alertLevel?: string;
+  onToggleLock: () => void;
 }
 
-export const HeaderBar: React.FC<HeaderBarProps> = ({ doorStatus, isArmed, alertLevel }) => {
+export const HeaderBar: React.FC<HeaderBarProps> = ({ doorStatus, onToggleLock }) => {
   const [timeStr, setTimeStr] = useState<string>("");
   const [dateStr, setDateStr] = useState<string>("");
 
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      setTimeStr(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+      setTimeStr(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
       setDateStr(now.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }));
     };
     updateTime();
@@ -24,91 +23,55 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ doorStatus, isArmed, alert
     return () => clearInterval(interval);
   }, []);
 
+  const isLocked = doorStatus === "LOCKED";
+
   return (
-    <header className="w-full bg-[#0D1527]/90 backdrop-blur-md border-b border-slate-800 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50 shadow-lg">
-      {/* Brand & Project Identity */}
+    <header className="w-full max-w-7xl mx-auto px-6 pt-6 pb-2 flex items-center justify-between">
+      {/* Brand Identity */}
       <div className="flex items-center gap-3">
-        <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-500 shadow-md glow-cyan">
-          <ShieldCheck className="w-6 h-6 text-white" />
-          <span className="absolute -top-1 -right-1 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
-          </span>
+        <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <Shield className="w-5 h-5 text-white" />
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
+            <span className="text-lg font-bold tracking-tight text-white">
               CareSentinel<span className="text-cyan-400 font-extrabold">+</span>
-            </h1>
-            <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800">
-              Echo Show 15 Hub
+            </span>
+            <span className="text-[11px] font-medium text-slate-400 bg-white/[0.04] border border-white/[0.08] px-2.5 py-0.5 rounded-full">
+              Echo Show 15
             </span>
           </div>
-          <p className="text-xs text-slate-400 font-medium">
-            Autonomous Voice & Vision Ambient Care
-          </p>
+          <p className="text-xs text-slate-400">Autonomous Ambient Care & Home Safety</p>
         </div>
       </div>
 
-      {/* Resident & Caregiver Telemetry */}
-      <div className="hidden md:flex items-center gap-5 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800 text-xs">
-        <div className="flex items-center gap-2 text-slate-300">
-          <User className="w-4 h-4 text-cyan-400" />
-          <span>
-            Resident: <strong className="text-white">Ramesh Singh (74)</strong>
-          </span>
-        </div>
-        <div className="w-px h-4 bg-slate-700" />
-        <div className="flex items-center gap-2 text-slate-300">
-          <Heart className="w-4 h-4 text-rose-400" />
-          <span>
-            Vitals: <strong className="text-emerald-400">Normal</strong>
-          </span>
-        </div>
-        <div className="w-px h-4 bg-slate-700" />
-        <div className="flex items-center gap-2 text-slate-300">
-          <Bell className="w-4 h-4 text-amber-400" />
-          <span>
-            Guardian: <strong className="text-white">Priya (Daughter)</strong>
-          </span>
-        </div>
+      {/* Center Status Pill */}
+      <div className="hidden md:flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] backdrop-blur-md text-xs text-slate-300">
+        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+        <span>Ramesh Singh (74)</span>
+        <span className="text-slate-600">•</span>
+        <span className="text-emerald-400 font-medium">Perimeter Secure</span>
+        <span className="text-slate-600">•</span>
+        <span className="text-slate-400">AWS Bedrock Active</span>
       </div>
 
-      {/* Real-time Status Badges & Clock */}
+      {/* Right Controls: Lock Status & Time */}
       <div className="flex items-center gap-4">
-        {/* Door Lock Status Badge */}
-        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border ${
-          doorStatus === "LOCKED"
-            ? "bg-emerald-950/70 border-emerald-700/60 text-emerald-300 glow-safe"
-            : "bg-amber-950/70 border-amber-700/60 text-amber-300"
-        }`}>
-          {doorStatus === "LOCKED" ? (
-            <>
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>DEADBOLT LOCKED</span>
-            </>
-          ) : (
-            <>
-              <ShieldAlert className="w-4 h-4 text-amber-400" />
-              <span>DEADBOLT UNLOCKED</span>
-            </>
-          )}
-        </div>
+        <button
+          onClick={onToggleLock}
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-300 ${
+            isLocked
+              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20"
+              : "bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20"
+          }`}
+        >
+          {isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+          <span>{isLocked ? "Door Locked" : "Door Unlocked"}</span>
+        </button>
 
-        {/* AWS Cloud Badge */}
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300">
-          <Cloud className="w-3.5 h-3.5 text-orange-400" />
-          <span>AWS Builder: Bedrock</span>
-        </div>
-
-        {/* Live Clock */}
         <div className="text-right">
-          <div className="text-base font-bold text-white tracking-wider tabular-nums font-mono">
-            {timeStr || "10:00:00"}
-          </div>
-          <div className="text-[11px] text-slate-400 font-medium">
-            {dateStr || "Today"}
-          </div>
+          <div className="text-sm font-semibold text-white tracking-tight">{timeStr || "10:00"}</div>
+          <div className="text-[11px] text-slate-400">{dateStr || "Today"}</div>
         </div>
       </div>
     </header>

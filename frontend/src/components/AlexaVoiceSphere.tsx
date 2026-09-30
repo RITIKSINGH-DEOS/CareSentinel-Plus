@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Mic, MicOff, Send, Volume2, Sparkles, AlertCircle } from "lucide-react";
+import { Mic, MicOff, Send, Sparkles } from "lucide-react";
 
 interface AlexaVoiceSphereProps {
   onSendMessage: (message: string) => Promise<string>;
@@ -17,11 +17,10 @@ export const AlexaVoiceSphere: React.FC<AlexaVoiceSphereProps> = ({
   const [isListening, setIsListening] = useState<boolean>(false);
   const [transcript, setTranscript] = useState<string>("");
   const [textInput, setTextInput] = useState<string>("");
-  const [speechSupported, setSpeechSupported] = useState<boolean>(true);
   const [chatLog, setChatLog] = useState<Array<{ role: "user" | "alexa"; text: string }>>([
     {
       role: "alexa",
-      text: "CareSentinel+ is online. The front door is monitored, and emergency dispatch is standing by. You can speak to me naturally."
+      text: "CareSentinel+ is online. You can speak to me naturally, or ask to secure the door."
     }
   ]);
 
@@ -39,29 +38,17 @@ export const AlexaVoiceSphere: React.FC<AlexaVoiceSphereProps> = ({
         recognition.interimResults = true;
         recognition.lang = "en-US";
 
-        recognition.onstart = () => {
-          setIsListening(true);
-        };
-
+        recognition.onstart = () => setIsListening(true);
         recognition.onresult = (event: any) => {
           const currentTranscript = Array.from(event.results)
             .map((result: any) => result[0].transcript)
             .join("");
           setTranscript(currentTranscript);
         };
-
-        recognition.onerror = (event: any) => {
-          console.warn("Speech recognition error:", event.error);
-          setIsListening(false);
-        };
-
-        recognition.onend = () => {
-          setIsListening(false);
-        };
+        recognition.onerror = () => setIsListening(false);
+        recognition.onend = () => setIsListening(false);
 
         recognitionRef.current = recognition;
-      } else {
-        setSpeechSupported(false);
       }
     }
   }, []);
@@ -69,12 +56,11 @@ export const AlexaVoiceSphere: React.FC<AlexaVoiceSphereProps> = ({
   // Text-to-Speech: Speaks Alexa's response aloud
   const speakText = (text: string) => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel(); // Stop any active speech
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 1.0;
       utterance.pitch = 1.05;
 
-      // Pick natural female voice if available
       const voices = window.speechSynthesis.getVoices();
       const preferredVoice = voices.find(
         (v) =>
@@ -86,12 +72,10 @@ export const AlexaVoiceSphere: React.FC<AlexaVoiceSphereProps> = ({
       if (preferredVoice) {
         utterance.voice = preferredVoice;
       }
-
       window.speechSynthesis.speak(utterance);
     }
   };
 
-  // Trigger speech whenever alexaSpeech updates
   useEffect(() => {
     if (alexaSpeech) {
       speakText(alexaSpeech);
@@ -104,7 +88,6 @@ export const AlexaVoiceSphere: React.FC<AlexaVoiceSphereProps> = ({
     }
   }, [alexaSpeech]);
 
-  // Handle Speech Recognition finish
   const toggleListening = () => {
     if (isListening) {
       recognitionRef.current?.stop();
@@ -129,93 +112,66 @@ export const AlexaVoiceSphere: React.FC<AlexaVoiceSphereProps> = ({
     setTranscript("");
 
     setChatLog((prev) => [...prev, { role: "user", text: userText }]);
-    const reply = await onSendMessage(userText);
+    await onSendMessage(userText);
   };
 
   return (
-    <div className="bg-[#0B1120] border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
+    <div className="bg-[#0D1322] border border-white/[0.08] rounded-3xl p-6 shadow-2xl flex flex-col gap-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <Sparkles className="w-4 h-4 text-cyan-400" />
-          <h2 className="text-base font-bold text-white">Alexa+ Ambient Voice Core</h2>
+          <h2 className="text-sm font-semibold text-white tracking-wide">Alexa+ Ambient Voice</h2>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-            MCP Active
-          </span>
-        </div>
+        <span className="text-[11px] font-medium text-cyan-400 bg-cyan-950/60 border border-cyan-800/60 px-2.5 py-0.5 rounded-full">
+          MCP Tools Connected
+        </span>
       </div>
 
-      {/* Visual Animated Alexa Pulsing Sphere & Soundbars */}
-      <div className="relative w-full py-6 flex flex-col items-center justify-center bg-gradient-to-b from-slate-900/60 to-slate-950/80 rounded-xl border border-slate-800/80 overflow-hidden">
-        {/* Glowing Aura */}
+      {/* Modern Glowing Orb & Visualizer */}
+      <div className="relative w-full py-6 flex flex-col items-center justify-center bg-gradient-to-b from-white/[0.02] to-transparent rounded-2xl border border-white/[0.04]">
+        {/* Ambient Radial Glow */}
         <div
-          className={`w-28 h-28 rounded-full flex items-center justify-center transition-all duration-500 shadow-2xl relative ${
+          onClick={toggleListening}
+          className={`cursor-pointer w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 relative ${
             isListening
-              ? "bg-gradient-to-tr from-cyan-400 to-blue-600 scale-110 glow-cyan animate-pulse"
+              ? "bg-gradient-to-tr from-cyan-400 to-indigo-500 scale-110 shadow-[0_0_50px_rgba(56,189,248,0.5)] animate-pulse"
               : isProcessing
-              ? "bg-gradient-to-tr from-amber-400 to-orange-600 scale-105 animate-spin"
-              : "bg-gradient-to-tr from-cyan-600/70 to-blue-900/60"
+              ? "bg-gradient-to-tr from-amber-400 to-indigo-600 scale-105 shadow-[0_0_35px_rgba(245,158,11,0.4)] animate-spin"
+              : "bg-gradient-to-tr from-cyan-500/20 to-indigo-600/30 hover:scale-105 border border-cyan-500/30 shadow-[0_0_30px_rgba(56,189,248,0.15)]"
           }`}
         >
-          {/* Inner Core */}
-          <div className="w-20 h-20 rounded-full bg-[#070B14] flex items-center justify-center border border-cyan-500/40">
-            <Mic
-              className={`w-9 h-9 transition-colors ${
-                isListening ? "text-cyan-400 animate-bounce" : "text-slate-400"
-              }`}
-            />
+          <div className="w-16 h-16 rounded-full bg-[#070B14] flex items-center justify-center border border-white/10">
+            <Mic className={`w-7 h-7 transition-colors ${isListening ? "text-cyan-400" : "text-slate-300"}`} />
           </div>
         </div>
 
-        {/* Waveform Sound Bars */}
-        <div className="flex items-center gap-1.5 mt-5 h-8">
-          {[40, 70, 100, 60, 90, 45, 80, 50, 95, 60].map((h, i) => (
-            <div
-              key={i}
-              className={`w-1.5 rounded-full transition-all duration-200 ${
-                isListening || isProcessing
-                  ? "bg-cyan-400 animate-wave"
-                  : "bg-slate-700 h-2"
-              }`}
-              style={{
-                height: isListening ? `${h}%` : "6px",
-                animationDelay: `${i * 0.1}s`,
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Dynamic Voice Status Text */}
-        <p className="text-xs font-semibold text-slate-300 mt-3 text-center px-4">
+        {/* Dynamic Voice Status */}
+        <p className="text-xs font-medium text-slate-300 mt-4 text-center px-4">
           {isListening
-            ? transcript || "Listening to your voice... Speak now"
+            ? transcript || "Listening to your voice..."
             : isProcessing
-            ? "Alexa+ reasoning via MCP Tools..."
-            : "Tap mic or speak: 'Alexa, lock door' or 'Alexa, I feel dizzy'"}
+            ? "Executing MCP Tools..."
+            : "Tap to speak with Alexa+"}
         </p>
       </div>
 
-      {/* Conversation Dialogue Log (Scrollable) */}
-      <div className="w-full h-36 overflow-y-auto space-y-2.5 p-3 rounded-xl bg-slate-950/70 border border-slate-900 text-xs font-sans">
-        {chatLog.map((chat, idx) => (
+      {/* Conversation Dialogue (Clean minimal card) */}
+      <div className="w-full h-32 overflow-y-auto space-y-2 p-3 rounded-2xl bg-black/20 border border-white/[0.04] text-xs">
+        {chatLog.slice(-3).map((chat, idx) => (
           <div
             key={idx}
-            className={`flex flex-col ${
-              chat.role === "user" ? "items-end" : "items-start"
-            }`}
+            className={`flex flex-col ${chat.role === "user" ? "items-end" : "items-start"}`}
           >
             <div
-              className={`px-3 py-2 rounded-xl max-w-[85%] leading-relaxed ${
+              className={`px-3.5 py-2 rounded-2xl max-w-[90%] leading-relaxed ${
                 chat.role === "user"
-                  ? "bg-cyan-600 text-white rounded-br-none"
-                  : "bg-slate-800/90 text-slate-200 rounded-bl-none border border-slate-700/60"
+                  ? "bg-cyan-500/20 border border-cyan-500/40 text-cyan-100"
+                  : "bg-white/[0.04] border border-white/[0.06] text-slate-200"
               }`}
             >
-              <div className="text-[10px] font-bold opacity-70 mb-0.5">
-                {chat.role === "user" ? "Resident (Voice/Text)" : "Alexa+ Ambient Companion"}
+              <div className="text-[10px] text-slate-400 font-medium mb-0.5">
+                {chat.role === "user" ? "Resident" : "Alexa+"}
               </div>
               <div>{chat.text}</div>
             </div>
@@ -223,27 +179,18 @@ export const AlexaVoiceSphere: React.FC<AlexaVoiceSphereProps> = ({
         ))}
       </div>
 
-      {/* Voice Mic Button & Quick Typing Box */}
+      {/* Voice Trigger Button & Input Bar */}
       <div className="flex items-center gap-2">
         <button
           onClick={toggleListening}
-          className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-md shrink-0 ${
+          className={`px-4 py-2.5 rounded-xl font-medium text-xs flex items-center gap-2 transition-all shadow-md shrink-0 ${
             isListening
-              ? "bg-rose-600 hover:bg-rose-500 text-white animate-pulse"
-              : "bg-cyan-600 hover:bg-cyan-500 text-white glow-cyan"
+              ? "bg-rose-500 hover:bg-rose-600 text-white animate-pulse"
+              : "bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold"
           }`}
         >
-          {isListening ? (
-            <>
-              <MicOff className="w-4 h-4" />
-              <span>STOP LISTENING</span>
-            </>
-          ) : (
-            <>
-              <Mic className="w-4 h-4" />
-              <span>TALK TO ALEXA+</span>
-            </>
-          )}
+          {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          <span>{isListening ? "Stop" : "Speak"}</span>
         </button>
 
         <form
@@ -257,13 +204,13 @@ export const AlexaVoiceSphere: React.FC<AlexaVoiceSphereProps> = ({
             type="text"
             value={textInput}
             onChange={(e) => setTextInput(e.target.value)}
-            placeholder="Or type a test command (e.g. 'lock the door')..."
-            className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+            placeholder="Type 'lock the door' or 'I feel dizzy'..."
+            className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50"
           />
           <button
             type="submit"
             disabled={!textInput.trim()}
-            className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 disabled:opacity-40 transition-colors"
+            className="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-cyan-400 disabled:opacity-30 transition-colors"
           >
             <Send className="w-4 h-4" />
           </button>

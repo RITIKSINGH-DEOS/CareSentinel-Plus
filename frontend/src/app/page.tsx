@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { HeaderBar } from "@/components/HeaderBar";
 import { RingCameraView } from "@/components/RingCameraView";
 import { AlexaVoiceSphere } from "@/components/AlexaVoiceSphere";
@@ -10,16 +10,15 @@ import { VitalsWidget } from "@/components/VitalsWidget";
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 export default function Home() {
-  const [doorStatus, setDoorStatus] = useState<string>("UNLOCKED");
+  const [doorStatus, setDoorStatus] = useState<string>("LOCKED");
   const [alexaSpeech, setAlexaSpeech] = useState<string>(
-    "CareSentinel+ is online. The front door is monitored, and emergency dispatch is standing by. You can speak to me naturally."
+    "CareSentinel+ is online. The front door is secured, and emergency dispatch is standing by."
   );
   const [ringSpeakerText, setRingSpeakerText] = useState<string>("");
   const [activeScenario, setActiveScenario] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [mcpEvents, setMcpEvents] = useState<MCPEvent[]>([]);
 
-  // Add event helper
   const addEvent = (tool: string, params: any, result: any, source: string = "Alexa+ Agent") => {
     const newEvt: MCPEvent = {
       event_id: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
@@ -31,29 +30,22 @@ export default function Home() {
     setMcpEvents((prev) => [newEvt, ...prev]);
   };
 
-  // Toggle deadbolt lock state
-  const handleToggleLock = async () => {
+  const handleToggleLock = () => {
     const newStatus = doorStatus === "LOCKED" ? "UNLOCKED" : "LOCKED";
     setDoorStatus(newStatus);
-
     const action = newStatus === "LOCKED" ? "LOCK" : "UNLOCK";
-    const res = {
-      door_id: "front_door",
-      status: newStatus,
-      success: true,
-      timestamp: new Date().toLocaleTimeString(),
-      message: `Deadbolt is now ${newStatus}.`
-    };
-
-    addEvent("control_smart_lock", { door_id: "front_door", action }, res, "Manual Console Click");
-    setAlexaSpeech(`Front door is now ${newStatus.toLowerCase()}.`);
+    addEvent(
+      "control_smart_lock",
+      { door_id: "front_door", action },
+      { status: newStatus, success: true, timestamp: new Date().toLocaleTimeString() },
+      "Resident Command"
+    );
+    setAlexaSpeech(`The front door is now ${newStatus.toLowerCase()}.`);
   };
 
-  // Handle Voice / Text Message to Alexa+
   const handleSendMessage = async (userMessage: string): Promise<string> => {
     setIsProcessing(true);
     try {
-      // Attempt backend call
       const res = await fetch(`${BACKEND_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -73,16 +65,15 @@ export default function Home() {
         return data.speech;
       }
     } catch (e) {
-      console.warn("Backend API not reachable, running client-side local fallback:", e);
+      console.warn("Backend API not reachable, running client fallback:", e);
     }
 
-    // High-Fidelity Client-Side Fallback if backend is warming up
     const lower = userMessage.toLowerCase();
     let reply = "";
 
     if (lower.includes("lock") && lower.includes("door") && !lower.includes("unlock")) {
       setDoorStatus("LOCKED");
-      reply = "I have engaged the deadbolt. The front door is now securely locked.";
+      reply = "I have engaged the deadbolt. The front door is securely locked.";
       addEvent("control_smart_lock", { door_id: "front_door", action: "LOCK" }, { status: "LOCKED", success: true });
     } else if (lower.includes("unlock")) {
       setDoorStatus("UNLOCKED");
@@ -96,7 +87,7 @@ export default function Home() {
       reply = "Logged: You have taken your morning Blood Pressure medication (Amlodipine 5mg). Good job staying healthy!";
       addEvent("medication_schedule_logger", { medication_name: "Amlodipine", action: "LOG_TAKEN" }, { status: "CONFIRMED_TAKEN", next_due: "Tomorrow 08:00 AM" });
     } else {
-      reply = `CareSentinel+ is actively guarding your home. The front door is ${doorStatus.toLowerCase()}, vitals are normal, and emergency dispatch is standing by.`;
+      reply = `CareSentinel+ is actively guarding your home. The front door is ${doorStatus.toLowerCase()}, and vitals are normal.`;
     }
 
     setAlexaSpeech(reply);
@@ -104,7 +95,6 @@ export default function Home() {
     return reply;
   };
 
-  // Handle Scenario Quick-Trigger
   const handleTriggerScenario = async (scenarioId: string) => {
     setActiveScenario(scenarioId);
     setRingSpeakerText("");
@@ -134,7 +124,6 @@ export default function Home() {
       console.warn("Backend trigger not reached, executing client-side simulation:", e);
     }
 
-    // Local simulation fallback
     if (scenarioId === "late_night_delivery") {
       setDoorStatus("LOCKED");
       setRingSpeakerText("Please leave the package at the doorstep. The resident is resting.");
@@ -162,14 +151,14 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070B14] text-slate-100 flex flex-col font-sans">
-      {/* 1. Header Bar */}
-      <HeaderBar doorStatus={doorStatus} isArmed={true} />
+    <div className="min-h-screen bg-[#070B14] text-slate-100 flex flex-col font-sans selection:bg-cyan-500/20 selection:text-cyan-300">
+      {/* Minimal Header Bar */}
+      <HeaderBar doorStatus={doorStatus} onToggleLock={handleToggleLock} />
 
-      {/* 2. Main Dual-Panel Smart Hub Content */}
-      <main className="flex-1 p-5 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left Column: Ring Vision & Door Control (7 Cols) */}
-        <section className="lg:col-span-7 flex flex-col gap-5">
+      {/* Main Dual-Panel Content */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column: Ring Vision & Door Control */}
+        <section className="lg:col-span-7 flex flex-col gap-6">
           <RingCameraView
             doorStatus={doorStatus}
             onToggleLock={handleToggleLock}
@@ -179,8 +168,8 @@ export default function Home() {
           />
         </section>
 
-        {/* Right Column: Alexa+ Voice Brain & Vitals Widget (5 Cols) */}
-        <section className="lg:col-span-5 flex flex-col gap-5">
+        {/* Right Column: Alexa+ Voice & Vitals */}
+        <section className="lg:col-span-5 flex flex-col gap-6">
           <AlexaVoiceSphere
             onSendMessage={handleSendMessage}
             alexaSpeech={alexaSpeech}
@@ -193,7 +182,7 @@ export default function Home() {
           />
         </section>
 
-        {/* Bottom Full-Width: Live MCP Tool Inspector (12 Cols) */}
+        {/* Bottom Full-Width: Collapsible MCP Inspector */}
         <section className="lg:col-span-12">
           <MCPInspector
             events={mcpEvents}
@@ -202,17 +191,15 @@ export default function Home() {
         </section>
       </main>
 
-      {/* 3. Footer Bar */}
-      <footer className="w-full bg-[#080D1A] border-t border-slate-900 py-3 px-6 text-center text-xs text-slate-500 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          CareSentinel+ • Built for Amazon Developer Hackathon 2026 (Alexa+ & Ring Tracks)
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-cyan-400 font-mono">Streamable HTTP MCP</span>
+      {/* Footer */}
+      <footer className="w-full max-w-7xl mx-auto px-6 py-4 flex items-center justify-between text-xs text-slate-400 border-t border-white/[0.04]">
+        <span>CareSentinel+ • Amazon Developer Hackathon 2026</span>
+        <div className="flex items-center gap-3">
+          <span>Alexa+ (Streamable HTTP)</span>
           <span>•</span>
-          <span className="text-orange-400 font-mono">AWS Bedrock & SNS</span>
+          <span>Ring IoT</span>
           <span>•</span>
-          <span className="text-emerald-400 font-mono">MIT Open Source</span>
+          <span>AWS Bedrock</span>
         </div>
       </footer>
     </div>
