@@ -6,6 +6,7 @@ import { RingCameraView } from "@/components/RingCameraView";
 import { AlexaVoiceSphere } from "@/components/AlexaVoiceSphere";
 import { MCPInspector, MCPEvent } from "@/components/MCPInspector";
 import { VitalsWidget, MedicationItem } from "@/components/VitalsWidget";
+import { LaunchReel } from "@/components/LaunchReel";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
@@ -18,6 +19,8 @@ export default function Home() {
   const [activeScenario, setActiveScenario] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [mcpEvents, setMcpEvents] = useState<MCPEvent[]>([]);
+  const [isReelActive, setIsReelActive] = useState<boolean>(false);
+  const [focusedSection, setFocusedSection] = useState<"ring" | "voice" | "vitals" | "mcp" | null>(null);
   const [medications, setMedications] = useState<MedicationItem[]>([
     { name: "Amlodipine (5mg)", purpose: "Blood Pressure", due: "08:00 AM", taken: true },
     { name: "Metformin (500mg)", purpose: "Type-2 Diabetes", due: "01:00 PM", taken: false },
@@ -224,12 +227,34 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#070B14] text-slate-100 flex flex-col font-sans selection:bg-cyan-500/20 selection:text-cyan-300">
       {/* Minimal Header Bar */}
-      <HeaderBar doorStatus={doorStatus} onToggleLock={handleToggleLock} />
+      <HeaderBar
+        doorStatus={doorStatus}
+        onToggleLock={handleToggleLock}
+        onPlayReel={() => setIsReelActive(true)}
+      />
+
+      {/* Interactive Launch Reel Tour Controller */}
+      <LaunchReel
+        isActive={isReelActive}
+        onClose={() => {
+          setIsReelActive(false);
+          setFocusedSection(null);
+        }}
+        onTriggerScenario={handleTriggerScenario}
+        onToggleMedication={handleToggleMedicationItem}
+        onFocusSection={setFocusedSection}
+      />
 
       {/* Main Dual-Panel Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Ring Vision & Door Control */}
-        <section className="lg:col-span-7 flex flex-col gap-6">
+        <section
+          className={`lg:col-span-7 flex flex-col gap-6 rounded-3xl transition-all duration-700 ${
+            focusedSection === "ring"
+              ? "ring-2 ring-cyan-400 shadow-2xl shadow-cyan-500/20 scale-[1.01]"
+              : ""
+          }`}
+        >
           <RingCameraView
             doorStatus={doorStatus}
             onToggleLock={handleToggleLock}
@@ -241,19 +266,43 @@ export default function Home() {
 
         {/* Right Column: Alexa+ Voice & Vitals */}
         <section className="lg:col-span-5 flex flex-col gap-6">
-          <AlexaVoiceSphere
-            onSendMessage={handleSendMessage}
-            alexaSpeech={alexaSpeech}
-            isProcessing={isProcessing}
-          />
-          <VitalsWidget
-            medications={medications}
-            onToggleMedication={handleToggleMedicationItem}
-          />
+          <div
+            className={`rounded-3xl transition-all duration-700 ${
+              focusedSection === "voice"
+                ? "ring-2 ring-cyan-400 shadow-2xl shadow-cyan-500/20 scale-[1.01]"
+                : ""
+            }`}
+          >
+            <AlexaVoiceSphere
+              onSendMessage={handleSendMessage}
+              alexaSpeech={alexaSpeech}
+              isProcessing={isProcessing}
+            />
+          </div>
+
+          <div
+            className={`rounded-3xl transition-all duration-700 ${
+              focusedSection === "vitals"
+                ? "ring-2 ring-cyan-400 shadow-2xl shadow-cyan-500/20 scale-[1.01]"
+                : ""
+            }`}
+          >
+            <VitalsWidget
+              medications={medications}
+              onToggleMedication={handleToggleMedicationItem}
+            />
+          </div>
         </section>
 
         {/* Bottom Full-Width: Collapsible MCP Inspector */}
-        <section className="lg:col-span-12">
+        <section
+          id="mcp-inspector-section"
+          className={`lg:col-span-12 rounded-3xl transition-all duration-700 ${
+            focusedSection === "mcp"
+              ? "ring-2 ring-cyan-400 shadow-2xl shadow-cyan-500/20 scale-[1.005]"
+              : ""
+          }`}
+        >
           <MCPInspector
             events={mcpEvents}
             onClear={() => setMcpEvents([])}
